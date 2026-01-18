@@ -2,6 +2,7 @@ import { useState } from 'react'
 import InputSection from './components/InputSection'
 import PersonaSelector from './components/PersonaSelector'
 import FeedbackGrid from './components/FeedbackGrid'
+import { generateFeedback } from './utils/feedbackGenerator'
 import './styles/App.css'
 
 function App() {
@@ -32,10 +33,16 @@ function App() {
     setSelectedPersona(persona)
   }
 
-  // Placeholder handler for generate button (will implement feedback generation later)
+  // Handler for generating feedback when button is clicked
   const handleGenerateFeedback = () => {
-    console.log('Generate feedback clicked')
-    // TODO: Implement feedback generation in Phase 2-3
+    // Generate feedback using the description, image data (null for now), and selected persona
+    // Note: imageData will be implemented in Phase 3 (image analysis)
+    const imageData = null // TODO: Add image analysis in Phase 3
+    
+    const generatedFeedbacks = generateFeedback(description, imageData, selectedPersona)
+    
+    // Update state with generated feedbacks
+    setFeedbacks(generatedFeedbacks)
   }
 
   return (

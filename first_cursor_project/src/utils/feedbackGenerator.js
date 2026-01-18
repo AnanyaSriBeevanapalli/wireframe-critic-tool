@@ -256,3 +256,37 @@ export function generateFeedback(description = '', imageData = null, persona = '
 
   return feedbacks
 }
+
+// ====================================
+// TEST EXAMPLES (commented out)
+// Uncomment these to test the generator in isolation
+// ====================================
+
+// Example 1: Basic feedback generation with form-related description
+// const testDescription1 = "Login page with email field and button"
+// const testFeedbacks1 = generateFeedback(testDescription1, null, 'End-User')
+// console.log('Test 1 - Form description:', testFeedbacks1)
+// console.log('Test 1 - Keywords:', extractKeywords(testDescription1))
+// console.log('Test 1 - Categories:', selectRelevantCategories(extractKeywords(testDescription1)))
+
+// Example 2: Navigation-focused description with image data
+// const testDescription2 = "Website with navigation menu in header and sidebar links"
+// const testImageData2 = { width: 375, height: 667, aspectRatio: 0.56 } // Mobile portrait
+// const testFeedbacks2 = generateFeedback(testDescription2, testImageData2, 'Accessibility Expert')
+// console.log('Test 2 - Navigation + mobile image:', testFeedbacks2)
+// console.log('Test 2 - Persona focus:', 'Accessibility Expert')
+
+// Example 3: Generic description to test fallback behavior
+// const testDescription3 = "Homepage layout with cards and sections"
+// const testFeedbacks3 = generateFeedback(testDescription3, null, 'General Designer')
+// console.log('Test 3 - Generic description:', testFeedbacks3)
+// console.log('Test 3 - Count:', testFeedbacks3.length)
+
+// Example 4: Test different personas with same description
+// const testDescription4 = "Contact form with multiple input fields and a submit button"
+// const personas = ['End-User', 'Stakeholder', 'Accessibility Expert', 'General Designer']
+// personas.forEach(persona => {
+//   const feedbacks = generateFeedback(testDescription4, null, persona)
+//   const categories = feedbacks.map(f => f.category)
+//   console.log(`${persona}:`, categories.join(', '))
+// })

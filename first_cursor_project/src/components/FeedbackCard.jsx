@@ -13,32 +13,36 @@ import { useState } from 'react'
 function FeedbackCard({ feedback }) {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // Placeholder feedback structure (will be replaced with real data later)
-  const displayFeedback = feedback || {
-    id: 'placeholder',
-    category: 'Usability',
-    type: 'strength',
-    text: 'This is a placeholder feedback card.',
-    suggestion: 'Add real feedback generation logic in Phase 2-3'
+  // Map feedback type to CSS class name
+  // Generator uses "positive" and "issue", but CSS expects "strength" and "issue"
+  const getTypeClass = (type) => {
+    if (type === 'positive') return 'strength'
+    return type || 'issue'
   }
 
+  if (!feedback) {
+    return null // Don't render if no feedback provided
+  }
+
+  const typeClass = getTypeClass(feedback.type)
+
   return (
-    <div className={`feedback-card ${displayFeedback.type}`}>
+    <div className={`feedback-card ${typeClass}`}>
       <div 
         className="feedback-card-header"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <span className="feedback-badge">{displayFeedback.category}</span>
-        <span className="feedback-type">{displayFeedback.type}</span>
+        <span className="feedback-badge">{feedback.category.charAt(0).toUpperCase() + feedback.category.slice(1)}</span>
+        <span className="feedback-type">{feedback.type === 'positive' ? 'Strength' : 'Issue'}</span>
         <span className="expand-icon">{isExpanded ? '−' : '+'}</span>
       </div>
       
       {isExpanded && (
         <div className="feedback-card-body">
-          <p className="feedback-text">{displayFeedback.text}</p>
-          {displayFeedback.suggestion && (
+          <p className="feedback-text">{feedback.text}</p>
+          {feedback.suggestion && (
             <p className="feedback-suggestion">
-              <strong>Suggestion:</strong> {displayFeedback.suggestion}
+              <strong>Suggestion:</strong> {feedback.suggestion}
             </p>
           )}
         </div>
