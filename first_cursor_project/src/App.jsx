@@ -23,6 +23,9 @@ function App() {
   // State for generated feedbacks
   const [feedbacks, setFeedbacks] = useState([])
   
+  // State for user notes (mapped by feedback ID)
+  const [userNotes, setUserNotes] = useState({})
+  
   // State for loading feedback generation
   const [isGenerating, setIsGenerating] = useState(false)
   
@@ -150,6 +153,14 @@ function App() {
     downloadAsText(text, 'wireframe-feedback')
   }
 
+  // Handler for user note changes
+  const handleNoteChange = (feedbackId, note) => {
+    setUserNotes(prev => ({
+      ...prev,
+      [feedbackId]: note
+    }))
+  }
+
   return (
     <div className="app">
       {/* Header */}
@@ -230,6 +241,8 @@ function App() {
           <FeedbackGrid 
             feedbacks={feedbacks}
             selectedPersona={selectedPersona}
+            onNoteChange={handleNoteChange}
+            userNotes={userNotes}
           />
         </section>
       </main>
