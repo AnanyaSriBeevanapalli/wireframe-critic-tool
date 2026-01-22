@@ -160,29 +160,83 @@ section {
 
 /* Persona Selector */
 .persona-selector-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  width: 100%;
 }
 
-.persona-label {
+.persona-fieldset {
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 16px;
+  margin: 0;
+}
+
+.persona-legend {
   font-weight: 600;
   color: #2c3e50;
-}
-
-.persona-select {
-  padding: 10px;
-  border: 2px solid #ddd;
-  border-radius: 4px;
   font-size: 1rem;
-  background: white;
-  cursor: pointer;
-  transition: border-color 0.3s;
+  padding: 0 8px;
 }
 
-.persona-select:focus {
-  outline: none;
-  border-color: #3498db;
+.persona-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.persona-radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.persona-radio-input {
+  margin-top: 4px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #3498db;
+  flex-shrink: 0;
+}
+
+.persona-radio-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  flex: 1;
+  user-select: none;
+}
+
+.persona-name {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+.persona-description {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+/* Focus styles for accessibility */
+.persona-radio-input:focus {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+}
+
+.persona-radio-option:hover .persona-radio-label {
+  color: #3498db;
+}
+
+/* Responsive: Stack on mobile, grid on larger screens */
+@media (min-width: 768px) {
+  .persona-radio-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
 }
 
 /* Generate Button */
