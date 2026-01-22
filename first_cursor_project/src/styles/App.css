@@ -369,15 +369,40 @@ section {
 
 .feedback-grid-empty {
   text-align: center;
-  padding: 40px;
+  padding: 60px 20px;
+  color: #95a5a6;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.empty-state-message {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #7f8c8d;
+  margin-bottom: 8px;
+}
+
+.empty-state-hint {
+  font-size: 0.95rem;
   color: #95a5a6;
   font-style: italic;
+  margin: 0;
 }
 
 .feedback-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
+  width: 100%;
+}
+
+/* Ensure grid items are accessible and properly sized */
+.feedback-grid > * {
+  min-width: 0; /* Prevents grid items from overflowing */
 }
 
 /* Feedback Card */
@@ -569,6 +594,7 @@ section {
 
   .feedback-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
   }
 }
 
@@ -576,6 +602,15 @@ section {
 @media (min-width: 1024px) {
   .feedback-grid {
     grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
+/* Large Desktop: 1440px and up */
+@media (min-width: 1440px) {
+  .feedback-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
   }
 
   .input-section-container {
