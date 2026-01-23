@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import InputSection from './components/InputSection'
 import PersonaSelector from './components/PersonaSelector'
 import FeedbackGrid from './components/FeedbackGrid'
 import { generateFeedback } from './utils/feedbackGenerator'
 import { analyzeImage } from './utils/imageAnalyzer'
 import { formatFeedbackAsText, copyToClipboard, downloadAsText } from './utils/exportUtils'
+import { saveSession, loadSession, clearSession } from './utils/localStorage'
 import './styles/App.css'
 
 function App() {
@@ -26,10 +27,16 @@ function App() {
   
   // UI State
   const [isGenerating, setIsGenerating] = useState(false) // Loading state for feedback generation
+  const [isLoadingSession, setIsLoadingSession] = useState(true) // Loading state for session restore
   
   // Button Logic State (tracks last generation inputs to determine button label)
   const [lastGeneratedDescription, setLastGeneratedDescription] = useState('')
   const [lastGeneratedImageIdentifier, setLastGeneratedImageIdentifier] = useState(null)
+
+  // Refs for debouncing
+  const saveTimeoutRef = useRef(null)
+  const notesSaveTimeoutRef = useRef(null)
+  const isInitialMountRef = useRef(true)
 
   // ====================================
   // INPUT HANDLERS
@@ -216,14 +223,194 @@ function App() {
   /**
    * Handle user note changes for individual feedback cards
    * Updates notes state mapped by feedback ID
+   * Auto-saves to localStorage with debouncing
    * @param {string} feedbackId - ID of the feedback card
    * @param {string} note - User's note text
    */
   const handleNoteChange = (feedbackId, note) => {
-    setUserNotes(prev => ({
-      ...prev,
-      [feedbackId]: note
-    }))
+    setUserNotes(prev => {
+      const updated = {
+        ...prev,
+        [feedbackId]: note
+      }
+      
+      // Debounce notes save to localStorage (500ms delay)
+      if (notesSaveTimeoutRef.current) {
+        clearTimeout(notesSaveTimeoutRef.current)
+      }
+      
+      notesSaveTimeoutRef.current = setTimeout(() => {
+        try {
+          const currentState = {
+            description,
+            imageData,
+            selectedPersona,
+            feedbacks,
+            userNotes: updated,
+            lastGeneratedDescription,
+            lastGeneratedImageIdentifier
+          }
+          saveSession(currentState)
+        } catch (error) {
+          console.error('Failed to save notes:', error)
+        }
+      }, 500)
+      
+      return updated
+    })
+  }
+
+  /**
+   * Clear all session data and reset app state
+   */
+  const handleClearSession = () => {
+    if (window.confirm('Are you sure you want to clear all data? This will reset your description, feedback, and notes.')) {
+      // Clear localStorage
+      clearSession()
+      
+      // Reset all state
+      setDescription('')
+      setImageFile(null)
+      setImageData(null)
+      setSelectedPersona('General Designer')
+      setFeedbacks([])
+      setUserNotes({})
+      setLastGeneratedDescription('')
+      setLastGeneratedImageIdentifier(null)
+      
+      // Clear file input if it exists
+      const fileInput = document.getElementById('image-upload')
+      if (fileInput) {
+        fileInput.value = ''
+      }
+    }
+  }
+
+  // ====================================
+  // SESSION MANAGEMENT (localStorage)
+  // ====================================
+  
+  /**
+   * Load session from localStorage on mount
+   */
+  useEffect(() => {
+    const loadSavedSession = async () => {
+      try {
+        setIsLoadingSession(true)
+        const saved = loadSession()
+        
+        if (saved) {
+          // Restore all state from saved session
+          setDescription(saved.description || '')
+          setSelectedPersona(saved.selectedPersona || 'General Designer')
+          setFeedbacks(saved.feedbacks || [])
+          setUserNotes(saved.userNotes || {})
+          setImageData(saved.imageData || null)
+          setLastGeneratedDescription(saved.lastGeneratedDescription || '')
+          setLastGeneratedImageIdentifier(saved.lastGeneratedImageIdentifier || null)
+          
+          console.log('Session restored from localStorage')
+        }
+      } catch (error) {
+        console.error('Error loading session:', error)
+        // Continue with default state on error
+      } finally {
+        setIsLoadingSession(false)
+        isInitialMountRef.current = false
+      }
+    }
+    
+    loadSavedSession()
+  }, []) // Run only on mount
+
+  /**
+   * Auto-save session to localStorage when state changes
+   * Debounced to avoid excessive saves (800ms delay)
+   */
+  useEffect(() => {
+    // Skip save on initial mount (we just loaded)
+    if (isInitialMountRef.current) {
+      return
+    }
+
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Set new timeout for debounced save
+    saveTimeoutRef.current = setTimeout(() => {
+      try {
+        const currentState = {
+          description,
+          imageData,
+          selectedPersona,
+          feedbacks,
+          userNotes,
+          lastGeneratedDescription,
+          lastGeneratedImageIdentifier
+        }
+        saveSession(currentState)
+      } catch (error) {
+        console.error('Failed to auto-save session:', error)
+      }
+    }, 800) // 800ms debounce
+
+    // Cleanup timeout on unmount or dependency change
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [description, selectedPersona, feedbacks, imageData, lastGeneratedDescription, lastGeneratedImageIdentifier]) // Auto-save on these changes
+
+  /**
+   * Clear user notes when feedbacks change significantly
+   * (e.g., new generation with different inputs)
+   */
+  useEffect(() => {
+    // Skip on initial mount
+    if (isInitialMountRef.current) {
+      return
+    }
+
+    // If feedbacks change and we have notes, check if feedback IDs still match
+    if (feedbacks.length > 0 && Object.keys(userNotes).length > 0) {
+      const currentFeedbackIds = new Set(feedbacks.map(f => f.id))
+      const noteIds = Object.keys(userNotes)
+      
+      // Remove notes for feedbacks that no longer exist
+      const notesToKeep = noteIds.filter(id => currentFeedbackIds.has(id))
+      
+      if (notesToKeep.length !== noteIds.length) {
+        const cleanedNotes = {}
+        notesToKeep.forEach(id => {
+          cleanedNotes[id] = userNotes[id]
+        })
+        setUserNotes(cleanedNotes)
+      }
+    } else if (feedbacks.length === 0 && Object.keys(userNotes).length > 0) {
+      // Clear all notes if feedbacks are cleared
+      setUserNotes({})
+    }
+  }, [feedbacks]) // Run when feedbacks change
+
+  // Show loading state during session restore
+  if (isLoadingSession) {
+    return (
+      <div className="app">
+        <header className="app-header">
+          <h1>AI Wireframe Critic</h1>
+          <p className="subtitle">Loading your session...</p>
+        </header>
+        <main className="app-main">
+          <div className="loading-indicator">
+            <div className="loading-spinner"></div>
+            <span>Restoring your previous session...</span>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   return (
@@ -232,6 +419,14 @@ function App() {
       <header className="app-header">
         <h1>AI Wireframe Critic</h1>
         <p className="subtitle">Get nuanced UX feedback on your wireframes</p>
+        <button
+          className="clear-session-button"
+          onClick={handleClearSession}
+          title="Clear all data and start fresh"
+          aria-label="Clear session and reset all data"
+        >
+          Clear Session
+        </button>
       </header>
 
       {/* Main content container */}

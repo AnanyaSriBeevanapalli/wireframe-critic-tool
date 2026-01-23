@@ -23,14 +23,32 @@ function FeedbackGrid({ feedbacks, selectedPersona, onNoteChange, userNotes = {}
   // Get preferred categories for current persona
   const preferredCategories = personaCategoryPriorities[selectedPersona] || []
 
-  // Filter and sort feedbacks based on persona (optional enhancement)
-  // Note: generateFeedback already does persona-based sorting, but we can add
-  // additional visual emphasis or filtering here if needed
-  const processedFeedbacks = [...feedbacks].map(feedback => ({
-    ...feedback,
-    // Add a flag to indicate if this is a preferred category for the persona
-    isPreferredForPersona: preferredCategories.includes(feedback.category)
-  }))
+  // Process feedbacks: prioritize preferred categories, add visual flag
+  // Sort: preferred categories first, then by type (issues before positives)
+  const processedFeedbacks = [...feedbacks]
+    .map(feedback => ({
+      ...feedback,
+      // Add a flag to indicate if this is a preferred category for the persona
+      isPreferredForPersona: preferredCategories.includes(feedback.category)
+    }))
+    .sort((a, b) => {
+      const aIsPreferred = a.isPreferredForPersona
+      const bIsPreferred = b.isPreferredForPersona
+
+      // Preferred categories come first
+      if (aIsPreferred && !bIsPreferred) return -1
+      if (!aIsPreferred && bIsPreferred) return 1
+
+      // Within same priority, issues come before positives
+      if (a.type === 'issue' && b.type === 'positive') return -1
+      if (a.type === 'positive' && b.type === 'issue') return 1
+
+      return 0
+    })
+
+  // Check if we have preferred feedbacks
+  const preferredFeedbacks = processedFeedbacks.filter(f => f.isPreferredForPersona)
+  const hasPreferredOnly = preferredFeedbacks.length > 0 && preferredFeedbacks.length === processedFeedbacks.length
 
   // Show empty state if no feedbacks
   if (feedbacks.length === 0) {
@@ -57,20 +75,31 @@ function FeedbackGrid({ feedbacks, selectedPersona, onNoteChange, userNotes = {}
   const preferredCount = processedFeedbacks.filter(f => f.isPreferredForPersona).length
 
   return (
-    <div 
-      className="feedback-grid"
-      role="region"
-      aria-label={`Feedback grid: ${totalCount} feedback ${totalCount === 1 ? 'item' : 'items'}${selectedPersona ? ` for ${selectedPersona} persona` : ''}`}
-    >
-      {processedFeedbacks.map((feedback, index) => (
-        <FeedbackCard 
-          key={feedback.id} 
-          feedback={feedback}
-          onNoteChange={onNoteChange}
-          userNote={userNotes[feedback.id] || ''}
-        />
-      ))}
-    </div>
+    <>
+      {/* Show info message if filtering/sorting is active */}
+      {!hasPreferredOnly && preferredCount > 0 && (
+        <div className="persona-filter-info" role="status" aria-live="polite">
+          <span className="filter-info-text">
+            Showing {preferredCount} of {totalCount} feedback items prioritized for <strong>{selectedPersona}</strong> persona.
+          </span>
+        </div>
+      )}
+      
+      <div 
+        className="feedback-grid"
+        role="region"
+        aria-label={`Feedback grid: ${totalCount} feedback ${totalCount === 1 ? 'item' : 'items'}${selectedPersona ? ` for ${selectedPersona} persona` : ''}`}
+      >
+        {processedFeedbacks.map((feedback, index) => (
+          <FeedbackCard 
+            key={feedback.id} 
+            feedback={feedback}
+            onNoteChange={onNoteChange}
+            userNote={userNotes[feedback.id] || ''}
+          />
+        ))}
+      </div>
+    </>
   )
 }
 

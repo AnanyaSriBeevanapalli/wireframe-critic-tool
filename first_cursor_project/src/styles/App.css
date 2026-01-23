@@ -46,6 +46,28 @@ body {
 .subtitle {
   color: #7f8c8d;
   font-size: 1.1rem;
+  margin-bottom: 12px;
+}
+
+.clear-session-button {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.clear-session-button:hover {
+  background-color: #c0392b;
+}
+
+.clear-session-button:active {
+  transform: translateY(1px);
 }
 
 /* Main Content */
@@ -391,6 +413,26 @@ section {
   color: #95a5a6;
   font-style: italic;
   margin: 0;
+}
+
+/* Persona Filter Info */
+.persona-filter-info {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background-color: #e8f4f8;
+  border-left: 4px solid #3498db;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #2c3e50;
+}
+
+.filter-info-text {
+  display: block;
+}
+
+.filter-info-text strong {
+  color: #2980b9;
+  font-weight: 600;
 }
 
 .feedback-grid {

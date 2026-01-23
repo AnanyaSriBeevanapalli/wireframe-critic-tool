@@ -12,6 +12,7 @@ const CURRENT_VERSION = 1 // Increment this if the state structure changes signi
  *   imageData: object|null,    // Analyzed image metadata (width, height, aspectRatio, etc.)
  *   selectedPersona: string,   // Selected persona name
  *   feedbacks: array,          // Generated feedback objects
+ *   userNotes: object,         // User notes mapped by feedback ID: { [feedbackId]: note }
  *   lastGeneratedDescription: string,  // Last description used for generation
  *   lastGeneratedImageIdentifier: string|null  // Last image identifier used
  * }
@@ -24,6 +25,7 @@ const CURRENT_VERSION = 1 // Increment this if the state structure changes signi
  * @param {Object|null} state.imageData - Analyzed image data
  * @param {string} state.selectedPersona - Selected persona
  * @param {Array} state.feedbacks - Generated feedbacks array
+ * @param {Object} state.userNotes - User notes object
  * @param {string} state.lastGeneratedDescription - Last generated description
  * @param {string|null} state.lastGeneratedImageIdentifier - Last image identifier
  * @returns {boolean} - True if save was successful, false otherwise
@@ -37,6 +39,7 @@ export function saveSession(state) {
       imageData: state.imageData || null,
       selectedPersona: state.selectedPersona || 'General Designer',
       feedbacks: state.feedbacks || [],
+      userNotes: state.userNotes || {},
       lastGeneratedDescription: state.lastGeneratedDescription || '',
       lastGeneratedImageIdentifier: state.lastGeneratedImageIdentifier || null
     }
@@ -95,6 +98,7 @@ export function loadSession() {
       imageData: sessionData.imageData || null,
       selectedPersona: sessionData.selectedPersona || 'General Designer',
       feedbacks: sessionData.feedbacks || [],
+      userNotes: sessionData.userNotes || {},
       lastGeneratedDescription: sessionData.lastGeneratedDescription || '',
       lastGeneratedImageIdentifier: sessionData.lastGeneratedImageIdentifier || null
     }
