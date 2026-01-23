@@ -4,7 +4,7 @@ import PersonaSelector from './components/PersonaSelector'
 import FeedbackGrid from './components/FeedbackGrid'
 import { generateFeedback } from './utils/feedbackGenerator'
 import { analyzeImage } from './utils/imageAnalyzer'
-import { formatFeedbackAsText, copyToClipboard, downloadAsText } from './utils/exportUtils'
+import { formatFeedbackAsText, copyToClipboard, downloadAsText, exportToPDF } from './utils/exportUtils'
 import { saveSession, loadSession, clearSession } from './utils/localStorage'
 import './styles/App.css'
 
@@ -187,7 +187,7 @@ function App() {
     }
 
     try {
-      const text = formatFeedbackAsText(feedbacks, description, selectedPersona)
+      const text = formatFeedbackAsText(feedbacks, description, selectedPersona, userNotes)
       const success = await copyToClipboard(text)
       
       if (success) {
@@ -212,11 +212,47 @@ function App() {
     }
 
     try {
-      const text = formatFeedbackAsText(feedbacks, description, selectedPersona)
+      const text = formatFeedbackAsText(feedbacks, description, selectedPersona, userNotes)
       downloadAsText(text, 'wireframe-feedback')
     } catch (error) {
       console.error('Error downloading feedback:', error)
       alert('Failed to download feedback. Please try again.')
+    }
+  }
+
+  /**
+   * Export feedback to PDF
+   * Uses html2pdf.js to generate a formatted PDF document
+   */
+  const handleExportToPDF = async () => {
+    if (feedbacks.length === 0) {
+      alert('No feedback to export. Generate feedback first.')
+      return
+    }
+
+    // Set loading state
+    setIsGenerating(true)
+
+    try {
+      // Add a small delay to ensure any loading states are cleared
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      const success = await exportToPDF(description, selectedPersona, feedbacks, userNotes)
+      
+      if (success) {
+        // PDF download started successfully
+        console.log('[App] PDF export completed successfully')
+      } else {
+        alert('Failed to export PDF. Please check the console for details.')
+      }
+    } catch (error) {
+      console.error('[App] Error exporting to PDF:', error)
+      alert('Failed to export PDF. Please try again.')
+    } finally {
+      // Clear loading state after a brief delay to ensure PDF generation completes
+      setTimeout(() => {
+        setIsGenerating(false)
+      }, 500)
     }
   }
 
@@ -474,6 +510,7 @@ function App() {
                     className="export-button copy-button"
                     onClick={handleCopyToClipboard}
                     title="Copy feedback to clipboard"
+                    disabled={isGenerating}
                   >
                     Copy
                   </button>
@@ -481,8 +518,17 @@ function App() {
                     className="export-button download-button"
                     onClick={handleDownloadAsText}
                     title="Download feedback as text file"
+                    disabled={isGenerating}
                   >
-                    Download
+                    Download Text
+                  </button>
+                  <button 
+                    className="export-button pdf-button"
+                    onClick={handleExportToPDF}
+                    title="Export feedback as PDF"
+                    disabled={isGenerating}
+                  >
+                    Export PDF
                   </button>
                 </div>
               </>

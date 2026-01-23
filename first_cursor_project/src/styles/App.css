@@ -357,6 +357,24 @@ section {
   background-color: #d35400;
 }
 
+.pdf-button {
+  background-color: #3498db;
+}
+
+.pdf-button:hover {
+  background-color: #2980b9;
+}
+
+.export-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.export-button:disabled:hover {
+  transform: none;
+}
+
 /* Loading Indicator */
 .loading-indicator {
   display: flex;
