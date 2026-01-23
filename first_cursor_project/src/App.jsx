@@ -451,6 +451,11 @@ function App() {
 
   return (
     <div className="app">
+      {/* Skip to main content link for screen readers */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+      
       {/* Header */}
       <header className="app-header">
         <h1>AI Wireframe Critic</h1>
@@ -466,7 +471,7 @@ function App() {
       </header>
 
       {/* Main content container */}
-      <main className="app-main">
+      <main id="main-content" className="app-main" role="main" aria-label="Main content">
         {/* Input Section: Description and Image Upload */}
         <section className="input-section">
           <InputSection
