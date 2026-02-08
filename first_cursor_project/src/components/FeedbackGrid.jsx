@@ -77,7 +77,7 @@ function FeedbackGrid({ feedbacks, selectedPersona, onNoteChange, userNotes = {}
   return (
     <>
       {/* Show info message if filtering/sorting is active */}
-      {!hasPreferredOnly && preferredCount > 0 && (
+      {preferredCount > 0 && preferredCount < totalCount && (
         <div className="persona-filter-info" role="status" aria-live="polite">
           <span className="filter-info-text">
             Showing {preferredCount} of {totalCount} feedback items prioritized for <strong>{selectedPersona}</strong> persona.

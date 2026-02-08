@@ -398,7 +398,7 @@ function App() {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [description, selectedPersona, feedbacks, imageData, lastGeneratedDescription, lastGeneratedImageIdentifier]) // Auto-save on these changes
+  }, [description, selectedPersona, feedbacks, imageData, userNotes, lastGeneratedDescription, lastGeneratedImageIdentifier]) // Auto-save on these changes
 
   /**
    * Clear user notes when feedbacks change significantly

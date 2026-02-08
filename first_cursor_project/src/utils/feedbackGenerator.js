@@ -233,6 +233,17 @@ export function generateFeedback(description = '', imageData = null, persona = '
     feedbacks = [...feedbacks, ...imageFeedbacks]
   }
 
+  // Step 4.5: Remove duplicates based on feedback text (prevent duplicate content)
+  const seenTexts = new Set()
+  feedbacks = feedbacks.filter(feedback => {
+    const textKey = feedback.text.toLowerCase().trim()
+    if (seenTexts.has(textKey)) {
+      return false
+    }
+    seenTexts.add(textKey)
+    return true
+  })
+
   // Step 5: Filter and prioritize by persona
   feedbacks = filterByPersona(feedbacks, persona)
 
