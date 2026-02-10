@@ -79,6 +79,62 @@ function FeedbackGrid({ feedbacks, selectedPersona, onNoteChange, userNotes = {}
   const issues = processedFeedbacks.filter(f => f.type === 'issue')
   const strengths = processedFeedbacks.filter(f => f.type === 'positive')
 
+  /**
+   * Group feedbacks by category, then sort category groups by frequency (most first),
+   * then alphabetically. Within each group, order is preserved (persona order; no severity field).
+   * @param {Array} items - Array of feedback objects (issues or strengths)
+   * @returns {Array<{ category: string, items: Array }>}
+   */
+  function groupByCategory(items) {
+    const byCategory = {}
+    for (const f of items) {
+      const cat = (f.category || 'general').toLowerCase()
+      if (!byCategory[cat]) byCategory[cat] = []
+      byCategory[cat].push(f)
+    }
+    const entries = Object.entries(byCategory).map(([category, itemList]) => ({ category, items: itemList }))
+    entries.sort((a, b) => {
+      const countDiff = b.items.length - a.items.length
+      if (countDiff !== 0) return countDiff
+      return a.category.localeCompare(b.category)
+    })
+    return entries
+  }
+
+  /** Display name for category (e.g. "form" -> "Form") */
+  function getCategoryDisplayName(category) {
+    if (!category) return 'General'
+    return category.charAt(0).toUpperCase() + category.slice(1)
+  }
+
+  const groupedIssues = groupByCategory(issues)
+  const groupedStrengths = groupByCategory(strengths)
+
+  /** Render one column's content as category groups with optional sub-headers */
+  function renderColumnGroups(groups, typeLabel) {
+    return (
+      <div className="feedback-column-cards" aria-labelledby={typeLabel === 'Issues' ? 'issues-header' : 'strengths-header'}>
+        {groups.map(({ category, items }) => (
+          <div key={category} className="feedback-category-group">
+            {items.length >= 2 && (
+              <h4 className="category-group-header">
+                {getCategoryDisplayName(category)} {typeLabel}
+              </h4>
+            )}
+            {items.map((feedback) => (
+              <FeedbackCard
+                key={feedback.id}
+                feedback={feedback}
+                onNoteChange={onNoteChange}
+                userNote={userNotes[feedback.id] || ''}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <>
       {/* Show info message if filtering/sorting is active */}
@@ -105,16 +161,7 @@ function FeedbackGrid({ feedbacks, selectedPersona, onNoteChange, userNotes = {}
               No issues detected!
             </p>
           ) : (
-            <div className="feedback-column-cards" aria-labelledby="issues-header">
-              {issues.map((feedback) => (
-                <FeedbackCard
-                  key={feedback.id}
-                  feedback={feedback}
-                  onNoteChange={onNoteChange}
-                  userNote={userNotes[feedback.id] || ''}
-                />
-              ))}
-            </div>
+            renderColumnGroups(groupedIssues, 'Issues')
           )}
         </div>
 
@@ -128,16 +175,7 @@ function FeedbackGrid({ feedbacks, selectedPersona, onNoteChange, userNotes = {}
               No strengths highlighted yet.
             </p>
           ) : (
-            <div className="feedback-column-cards" aria-labelledby="strengths-header">
-              {strengths.map((feedback) => (
-                <FeedbackCard
-                  key={feedback.id}
-                  feedback={feedback}
-                  onNoteChange={onNoteChange}
-                  userNote={userNotes[feedback.id] || ''}
-                />
-              ))}
-            </div>
+            renderColumnGroups(groupedStrengths, 'Strengths')
           )}
         </div>
       </div>
