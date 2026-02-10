@@ -29,9 +29,10 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false) // Loading state for feedback generation
   const [isLoadingSession, setIsLoadingSession] = useState(true) // Loading state for session restore
   
-  // Button Logic State (tracks last generation inputs to determine button label)
+  // Button Logic State (tracks last generation inputs so button is enabled only when something changed)
   const [lastGeneratedDescription, setLastGeneratedDescription] = useState('')
   const [lastGeneratedImageIdentifier, setLastGeneratedImageIdentifier] = useState(null)
+  const [lastGeneratedPersona, setLastGeneratedPersona] = useState(null)
 
   // Refs for debouncing
   const saveTimeoutRef = useRef(null)
@@ -99,27 +100,23 @@ function App() {
   }
 
   /**
-   * Check if current inputs differ from last generation inputs
-   * Used to determine button label ("Generate" vs "Regenerate")
-   * @returns {boolean} - True if inputs have changed
+   * Check if current inputs differ from last generation inputs.
+   * Button is enabled only when there are no feedbacks yet or when inputs have changed.
+   * @returns {boolean} - True if inputs have changed since last generation
    */
   const hasInputsChanged = () => {
     const currentDescription = description.trim()
     const currentImageId = getImageIdentifier(imageFile)
-    
-    // If description changed
-    if (currentDescription !== lastGeneratedDescription) {
-      return true
-    }
-    
-    // If image changed (different file or was added/removed)
-    if (currentImageId !== lastGeneratedImageIdentifier) {
-      return true
-    }
-    
-    // Inputs are the same
+
+    if (currentDescription !== lastGeneratedDescription) return true
+    if (currentImageId !== lastGeneratedImageIdentifier) return true
+    if (selectedPersona !== lastGeneratedPersona) return true
+
     return false
   }
+
+  /** True when Generate button should be enabled (first time or inputs changed). */
+  const canGenerate = feedbacks.length === 0 || hasInputsChanged()
 
   // ====================================
   // MAIN FEEDBACK GENERATION HANDLER
@@ -150,10 +147,10 @@ function App() {
       // Update state with generated feedbacks
       setFeedbacks(generatedFeedbacks)
       
-      // Save current inputs as the "last generated" inputs
-      // This allows us to detect if inputs change later (for button label logic)
+      // Save current inputs so we can disable the button when nothing has changed
       setLastGeneratedDescription(description.trim())
       setLastGeneratedImageIdentifier(getImageIdentifier(imageFile))
+      setLastGeneratedPersona(selectedPersona)
     } catch (error) {
       // Handle any errors during generation
       console.error('Error generating feedback:', error)
@@ -168,14 +165,6 @@ function App() {
   // ACTION HANDLERS
   // ====================================
   
-  /**
-   * Regenerate feedback with same inputs
-   * Same functionality as generate, but clearer UX intent
-   */
-  const handleRegenerateFeedback = () => {
-    handleGenerateFeedback()
-  }
-
   /**
    * Copy feedback to clipboard
    * Formats feedback as text and copies to system clipboard
@@ -284,7 +273,8 @@ function App() {
             feedbacks,
             userNotes: updated,
             lastGeneratedDescription,
-            lastGeneratedImageIdentifier
+            lastGeneratedImageIdentifier,
+            lastGeneratedPersona
           }
           saveSession(currentState)
         } catch (error) {
@@ -313,6 +303,7 @@ function App() {
       setUserNotes({})
       setLastGeneratedDescription('')
       setLastGeneratedImageIdentifier(null)
+      setLastGeneratedPersona(null)
       
       // Clear file input if it exists
       const fileInput = document.getElementById('image-upload')
@@ -344,6 +335,7 @@ function App() {
           setImageData(saved.imageData || null)
           setLastGeneratedDescription(saved.lastGeneratedDescription || '')
           setLastGeneratedImageIdentifier(saved.lastGeneratedImageIdentifier || null)
+          setLastGeneratedPersona(saved.lastGeneratedPersona ?? null)
           
           console.log('Session restored from localStorage')
         }
@@ -384,7 +376,8 @@ function App() {
           feedbacks,
           userNotes,
           lastGeneratedDescription,
-          lastGeneratedImageIdentifier
+          lastGeneratedImageIdentifier,
+          lastGeneratedPersona
         }
         saveSession(currentState)
       } catch (error) {
@@ -398,7 +391,7 @@ function App() {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [description, selectedPersona, feedbacks, imageData, userNotes, lastGeneratedDescription, lastGeneratedImageIdentifier]) // Auto-save on these changes
+  }, [description, selectedPersona, feedbacks, imageData, userNotes, lastGeneratedDescription, lastGeneratedImageIdentifier, lastGeneratedPersona]) // Auto-save on these changes
 
   /**
    * Clear user notes when feedbacks change significantly
@@ -490,53 +483,45 @@ function App() {
           />
         </section>
 
-        {/* Generate/Regenerate Button */}
+        {/* Generate Feedback Button + Export (when feedback exists) */}
         <section className="generate-section">
           <div className="generate-buttons-container">
-            {feedbacks.length === 0 || hasInputsChanged() ? (
-              <button 
-                className="generate-button"
-                onClick={handleGenerateFeedback}
-                disabled={isGenerating}
-              >
-                {isGenerating ? 'Generating...' : 'Generate Feedback'}
-              </button>
-            ) : (
-              <>
-                <button 
-                  className="generate-button regenerate-button"
-                  onClick={handleRegenerateFeedback}
+            <button
+              className="generate-button"
+              onClick={handleGenerateFeedback}
+              disabled={isGenerating || !canGenerate}
+              title={!canGenerate ? 'No changes — feedback is up to date' : 'Generate feedback from description, image, and persona'}
+              aria-label={!canGenerate ? 'No changes — feedback is up to date' : 'Generate feedback'}
+            >
+              {isGenerating ? 'Generating...' : 'Generate Feedback'}
+            </button>
+            {feedbacks.length > 0 && (
+              <div className="export-buttons">
+                <button
+                  className="export-button copy-button"
+                  onClick={handleCopyToClipboard}
+                  title="Copy feedback to clipboard"
                   disabled={isGenerating}
                 >
-                  {isGenerating ? 'Regenerating...' : 'Regenerate Feedback'}
+                  Copy
                 </button>
-                <div className="export-buttons">
-                  <button 
-                    className="export-button copy-button"
-                    onClick={handleCopyToClipboard}
-                    title="Copy feedback to clipboard"
-                    disabled={isGenerating}
-                  >
-                    Copy
-                  </button>
-                  <button 
-                    className="export-button download-button"
-                    onClick={handleDownloadAsText}
-                    title="Download feedback as text file"
-                    disabled={isGenerating}
-                  >
-                    Download Text
-                  </button>
-                  <button 
-                    className="export-button pdf-button"
-                    onClick={handleExportToPDF}
-                    title="Export feedback as PDF"
-                    disabled={isGenerating}
-                  >
-                    Export PDF
-                  </button>
-                </div>
-              </>
+                <button
+                  className="export-button download-button"
+                  onClick={handleDownloadAsText}
+                  title="Download feedback as text file"
+                  disabled={isGenerating}
+                >
+                  Download Text
+                </button>
+                <button
+                  className="export-button pdf-button"
+                  onClick={handleExportToPDF}
+                  title="Export feedback as PDF"
+                  disabled={isGenerating}
+                >
+                  Export PDF
+                </button>
+              </div>
             )}
           </div>
           {isGenerating && (

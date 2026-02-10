@@ -14,7 +14,8 @@ const CURRENT_VERSION = 1 // Increment this if the state structure changes signi
  *   feedbacks: array,          // Generated feedback objects
  *   userNotes: object,         // User notes mapped by feedback ID: { [feedbackId]: note }
  *   lastGeneratedDescription: string,  // Last description used for generation
- *   lastGeneratedImageIdentifier: string|null  // Last image identifier used
+ *   lastGeneratedImageIdentifier: string|null,  // Last image identifier used
+ *   lastGeneratedPersona: string|null  // Last persona used (for button enable/disable)
  * }
  */
 
@@ -28,6 +29,7 @@ const CURRENT_VERSION = 1 // Increment this if the state structure changes signi
  * @param {Object} state.userNotes - User notes object
  * @param {string} state.lastGeneratedDescription - Last generated description
  * @param {string|null} state.lastGeneratedImageIdentifier - Last image identifier
+ * @param {string|null} state.lastGeneratedPersona - Last persona used for generation
  * @returns {boolean} - True if save was successful, false otherwise
  */
 export function saveSession(state) {
@@ -41,7 +43,8 @@ export function saveSession(state) {
       feedbacks: state.feedbacks || [],
       userNotes: state.userNotes || {},
       lastGeneratedDescription: state.lastGeneratedDescription || '',
-      lastGeneratedImageIdentifier: state.lastGeneratedImageIdentifier || null
+      lastGeneratedImageIdentifier: state.lastGeneratedImageIdentifier || null,
+      lastGeneratedPersona: state.lastGeneratedPersona ?? null
     }
 
     // Stringify and save to localStorage
@@ -61,7 +64,7 @@ export function saveSession(state) {
  * @returns {Object|null} - Saved state object, or null if not found or invalid
  * Returns object with same structure as saveSession expects:
  * { version, description, imageData, selectedPersona, feedbacks, 
- *   lastGeneratedDescription, lastGeneratedImageIdentifier }
+ *   lastGeneratedDescription, lastGeneratedImageIdentifier, lastGeneratedPersona }
  */
 export function loadSession() {
   try {
@@ -100,7 +103,8 @@ export function loadSession() {
       feedbacks: sessionData.feedbacks || [],
       userNotes: sessionData.userNotes || {},
       lastGeneratedDescription: sessionData.lastGeneratedDescription || '',
-      lastGeneratedImageIdentifier: sessionData.lastGeneratedImageIdentifier || null
+      lastGeneratedImageIdentifier: sessionData.lastGeneratedImageIdentifier || null,
+      lastGeneratedPersona: sessionData.lastGeneratedPersona ?? null
     }
   } catch (error) {
     // Handle JSON parse errors or other issues

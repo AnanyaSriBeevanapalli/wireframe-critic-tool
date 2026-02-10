@@ -1,7 +1,38 @@
 // feedbackGenerator.js - Core logic for generating UX feedback based on wireframe descriptions
 // Handles keyword extraction, category selection, persona filtering, and feedback generation
+// Deterministic: same (description + image dimensions + persona) always yields the same cards.
 
 import { feedbackPhrases } from '../data/feedbackPhrases.js'
+
+/**
+ * Simple string hash for deterministic seeding (fast, no crypto dependency).
+ * @param {string} str - Input string
+ * @returns {number} - Non-negative integer hash
+ */
+function simpleHash(str) {
+  const s = String(str ?? '')
+  let h = 0
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0
+  }
+  return Math.abs(h)
+}
+
+/**
+ * Compute a deterministic seed from current inputs so same input always gives same feedback set.
+ * @param {string} description - Wireframe description
+ * @param {Object|null} imageData - Image metadata (width, height)
+ * @param {string} persona - Selected persona
+ * @returns {number} - Seed number
+ */
+function getInputSeed(description, imageData, persona) {
+  const desc = String(description ?? '').trim()
+  const imageId = imageData && imageData.width != null && imageData.height != null
+    ? `${imageData.width}-${imageData.height}`
+    : ''
+  const p = String(persona ?? '')
+  return simpleHash(desc + '|' + imageId + '|' + p)
+}
 
 /**
  * Classify phrase style by content so we can restrict by persona (no changes to feedbackPhrases.js).
@@ -151,15 +182,15 @@ export function filterByPersona(feedbacks, persona) {
 }
 
 /**
- * Select random feedback phrases from relevant categories, filtered by persona style.
- * Stakeholder: only metrics/conversion-style phrases. Accessibility Expert: only WCAG-style.
- * End-User and General Designer: only generic phrases (no metrics, no WCAG).
+ * Select feedback phrases deterministically from relevant categories, filtered by persona style.
+ * Same (categories + persona + seed) always returns the same set. Shows 6–8 high-relevance cards.
  * @param {Array<string>} categories - Categories to select from
- * @param {number} count - Number of feedback items to generate (default: 4-6)
+ * @param {number} count - Optional target count (otherwise 6–8 from seed)
  * @param {string} persona - Selected persona (determines which phrase styles are allowed)
- * @returns {Array} - Array of feedback objects with unique IDs
+ * @param {number} seed - Deterministic seed (from description + image + persona)
+ * @returns {Array} - Array of feedback objects with stable IDs
  */
-function selectRandomPhrases(categories, count = null, persona = 'General Designer') {
+function selectRandomPhrases(categories, count = null, persona = 'General Designer', seed = 0) {
   // Filter phrases by relevant categories
   let relevantPhrases = feedbackPhrases.filter(phrase =>
     categories.includes(phrase.category)
@@ -185,32 +216,39 @@ function selectRandomPhrases(categories, count = null, persona = 'General Design
   }
 
   if (relevantPhrases.length === 0) {
-    return feedbackPhrases.slice(0, Math.min(4, feedbackPhrases.length)).map((p, i) => ({
+    const fallback = feedbackPhrases.slice(0, Math.min(4, feedbackPhrases.length))
+    return fallback.map((p, i) => ({
       ...p,
-      id: `feedback-${Date.now()}-${i}`
+      id: `feedback-${seed}-fallback-${i}`
     }))
   }
 
-  const targetCount = count || Math.floor(Math.random() * 3) + 4
-  const selectedCount = Math.min(targetCount, relevantPhrases.length)
-  const shuffled = [...relevantPhrases].sort(() => Math.random() - 0.5)
-  const selected = shuffled.slice(0, selectedCount)
+  // Deterministic order: sort by hash(phrase text + seed) so same seed => same order
+  const ordered = [...relevantPhrases].sort((a, b) => {
+    const ha = simpleHash((a.text || '') + seed)
+    const hb = simpleHash((b.text || '') + seed)
+    return ha - hb || 0
+  })
+
+  // Target 6–8 cards (deterministic per seed)
+  const targetCount = count ?? (6 + (seed % 3))
+  const selectedCount = Math.min(Math.max(6, targetCount), 8, ordered.length)
+  const selected = ordered.slice(0, selectedCount)
 
   return selected.map((phrase, index) => ({
     ...phrase,
-    id: `feedback-${Date.now()}-${index}`
+    id: `feedback-${seed}-${index}`
   }))
 }
 
 /**
- * Generate feedback based on image data (if provided)
- * Adds mobile/responsive feedback if image dimensions indicate mobile concerns.
- * Mobile phrase pool is filtered by persona (WCAG phrases only for Accessibility Expert, etc.).
+ * Generate feedback based on image data (if provided). Deterministic: same image + persona + seed => same choice.
  * @param {Object|null} imageData - Image metadata (width, height, aspectRatio, etc.)
  * @param {string} persona - Selected persona (for phrase style filter)
+ * @param {number} seed - Deterministic seed
  * @returns {Array} - Array of additional feedback objects related to image/mobile
  */
-function generateImageBasedFeedback(imageData, persona = 'General Designer') {
+function generateImageBasedFeedback(imageData, persona = 'General Designer', seed = 0) {
   const additionalFeedbacks = []
 
   if (!imageData) {
@@ -233,10 +271,11 @@ function generateImageBasedFeedback(imageData, persona = 'General Designer') {
         if (mobilePhrases.length === 0) mobilePhrases = feedbackPhrases.filter(p => p.category === 'mobile')
       }
       if (mobilePhrases.length > 0) {
-        const randomMobilePhrase = mobilePhrases[Math.floor(Math.random() * mobilePhrases.length)]
+        const index = Math.abs(seed % mobilePhrases.length)
+        const chosen = mobilePhrases[index]
         additionalFeedbacks.push({
-          ...randomMobilePhrase,
-          id: `feedback-image-mobile-${Date.now()}`
+          ...chosen,
+          id: `feedback-image-mobile-${seed}`
         })
       }
     }
@@ -247,7 +286,7 @@ function generateImageBasedFeedback(imageData, persona = 'General Designer') {
         category: "mobile",
         type: "issue",
         suggestion: "Ensure responsive breakpoints are implemented and test the layout at various screen sizes.",
-        id: `feedback-image-responsive-${Date.now()}`
+        id: `feedback-image-responsive-${seed}`
       })
     }
   }
@@ -256,14 +295,15 @@ function generateImageBasedFeedback(imageData, persona = 'General Designer') {
 }
 
 /**
- * Main function: Generate feedback based on description, image, and persona
- * Combines all the logic above to produce final feedback array
+ * Main function: Generate feedback based on description, image, and persona.
+ * Deterministic: same inputs always produce the same set of 6–8 cards.
  * @param {string} description - Wireframe description
  * @param {Object|null} imageData - Image metadata (optional)
  * @param {string} persona - Selected persona
  * @returns {Array} - Array of feedback objects ready to display
  */
 export function generateFeedback(description = '', imageData = null, persona = 'General Designer') {
+  const seed = getInputSeed(description, imageData, persona)
   const keywords = extractKeywords(description)
   let categories = selectRelevantCategories(keywords)
 
@@ -273,14 +313,14 @@ export function generateFeedback(description = '', imageData = null, persona = '
     categories = [...categories, ...extra]
   }
 
-  let feedbacks = selectRandomPhrases(categories, null, persona)
+  let feedbacks = selectRandomPhrases(categories, null, persona, seed)
 
   if (imageData) {
-    const imageFeedbacks = generateImageBasedFeedback(imageData, persona)
+    const imageFeedbacks = generateImageBasedFeedback(imageData, persona, seed)
     feedbacks = [...feedbacks, ...imageFeedbacks]
   }
 
-  // Step 4.5: Remove duplicates based on feedback text (prevent duplicate content)
+  // Remove duplicates based on feedback text (prevent duplicate content)
   const seenTexts = new Set()
   feedbacks = feedbacks.filter(feedback => {
     const textKey = feedback.text.toLowerCase().trim()
@@ -291,17 +331,17 @@ export function generateFeedback(description = '', imageData = null, persona = '
     return true
   })
 
-  // Step 5: Filter and prioritize by persona
+  // Filter and prioritize by persona
   feedbacks = filterByPersona(feedbacks, persona)
 
-  // Step 6: Limit to 6 feedbacks maximum for clean display
-  if (feedbacks.length > 6) {
-    feedbacks = feedbacks.slice(0, 6)
+  // Limit to 8 feedbacks maximum (show 6–8 relevant cards)
+  if (feedbacks.length > 8) {
+    feedbacks = feedbacks.slice(0, 8)
   }
 
-  // Ensure minimum of 4 feedbacks (if possible), using persona-appropriate phrases only
-  if (feedbacks.length < 4 && feedbackPhrases.length >= 4) {
-    const remaining = 4 - feedbacks.length
+  // Ensure minimum of 6 feedbacks (if possible), using deterministic fallback
+  if (feedbacks.length < 6 && feedbackPhrases.length >= 6) {
+    const remaining = 6 - feedbacks.length
     const usedTexts = new Set(feedbacks.map(f => (f.text || '').toLowerCase().trim()))
     let pool = feedbackPhrases.filter(p => !usedTexts.has((p.text || '').toLowerCase().trim()))
     if (persona === 'Stakeholder') {
@@ -314,10 +354,15 @@ export function generateFeedback(description = '', imageData = null, persona = '
       pool = pool.filter(isGenericStyle)
       if (pool.length === 0) pool = feedbackPhrases.filter(p => !usedTexts.has((p.text || '').toLowerCase().trim()))
     }
-    const shuffled = [...pool].sort(() => Math.random() - 0.5)
-    const additional = shuffled.slice(0, remaining).map((p, i) => ({
+    // Deterministic order for fallback
+    const ordered = [...pool].sort((a, b) => {
+      const ha = simpleHash((a.text || '') + seed + 'fallback')
+      const hb = simpleHash((b.text || '') + seed + 'fallback')
+      return ha - hb || 0
+    })
+    const additional = ordered.slice(0, remaining).map((p, i) => ({
       ...p,
-      id: `feedback-fallback-${Date.now()}-${i}`
+      id: `feedback-fallback-${seed}-${i}`
     }))
     feedbacks = [...feedbacks, ...additional]
   }
