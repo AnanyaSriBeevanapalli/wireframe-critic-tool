@@ -74,6 +74,11 @@ function FeedbackGrid({ feedbacks, selectedPersona, onNoteChange, userNotes = {}
   const totalCount = processedFeedbacks.length
   const preferredCount = processedFeedbacks.filter(f => f.isPreferredForPersona).length
 
+  // Split by type: Issues (left column) and Strengths/positive (right column)
+  // Persona prioritization is already applied in processedFeedbacks order
+  const issues = processedFeedbacks.filter(f => f.type === 'issue')
+  const strengths = processedFeedbacks.filter(f => f.type === 'positive')
+
   return (
     <>
       {/* Show info message if filtering/sorting is active */}
@@ -84,20 +89,57 @@ function FeedbackGrid({ feedbacks, selectedPersona, onNoteChange, userNotes = {}
           </span>
         </div>
       )}
-      
-      <div 
-        className="feedback-grid"
+
+      <div
+        className="feedback-two-column-layout"
         role="region"
-        aria-label={`Feedback grid: ${totalCount} feedback ${totalCount === 1 ? 'item' : 'items'}${selectedPersona ? ` for ${selectedPersona} persona` : ''}`}
+        aria-label={`Feedback: ${totalCount} items (${issues.length} issues, ${strengths.length} strengths)${selectedPersona ? ` for ${selectedPersona} persona` : ''}`}
       >
-        {processedFeedbacks.map((feedback, index) => (
-          <FeedbackCard 
-            key={feedback.id} 
-            feedback={feedback}
-            onNoteChange={onNoteChange}
-            userNote={userNotes[feedback.id] || ''}
-          />
-        ))}
+        {/* Left column: Issues */}
+        <div className="feedback-column issues-column">
+          <h3 className="feedback-column-header" id="issues-header">
+            Issues to Fix
+          </h3>
+          {issues.length === 0 ? (
+            <p className="feedback-column-empty" aria-live="polite">
+              No issues detected!
+            </p>
+          ) : (
+            <div className="feedback-column-cards" aria-labelledby="issues-header">
+              {issues.map((feedback) => (
+                <FeedbackCard
+                  key={feedback.id}
+                  feedback={feedback}
+                  onNoteChange={onNoteChange}
+                  userNote={userNotes[feedback.id] || ''}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right column: Strengths */}
+        <div className="feedback-column strengths-column">
+          <h3 className="feedback-column-header" id="strengths-header">
+            Strengths to Keep
+          </h3>
+          {strengths.length === 0 ? (
+            <p className="feedback-column-empty" aria-live="polite">
+              No strengths highlighted yet.
+            </p>
+          ) : (
+            <div className="feedback-column-cards" aria-labelledby="strengths-header">
+              {strengths.map((feedback) => (
+                <FeedbackCard
+                  key={feedback.id}
+                  feedback={feedback}
+                  onNoteChange={onNoteChange}
+                  userNote={userNotes[feedback.id] || ''}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </>
   )

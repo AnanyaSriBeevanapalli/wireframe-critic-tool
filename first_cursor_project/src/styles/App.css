@@ -538,6 +538,64 @@ section:hover {
   font-weight: 600;
 }
 
+/* Two-column layout: Issues (left) | Strengths (right) */
+.feedback-two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  width: 100%;
+}
+
+.feedback-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.feedback-column-header {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e0e0e0;
+  line-height: 1.3;
+}
+
+.issues-column .feedback-column-header {
+  border-bottom-color: #e74c3c;
+  color: #c0392b;
+}
+
+.strengths-column .feedback-column-header {
+  border-bottom-color: #27ae60;
+  color: #1e8449;
+}
+
+.feedback-column-empty {
+  margin: 0;
+  padding: 20px 16px;
+  font-size: 0.95rem;
+  color: #4a5568;
+  font-style: italic;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px dashed #ddd;
+  text-align: center;
+}
+
+.feedback-column-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feedback-column-cards > * {
+  min-width: 0;
+}
+
+/* Legacy single grid (kept for any refs); two-column uses .feedback-column-cards */
 .feedback-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -545,9 +603,8 @@ section:hover {
   width: 100%;
 }
 
-/* Ensure grid items are accessible and properly sized */
 .feedback-grid > * {
-  min-width: 0; /* Prevents grid items from overflowing */
+  min-width: 0;
 }
 
 /* Feedback Card - Enhanced with modern design */
@@ -791,6 +848,11 @@ section:hover {
     min-width: 120px;
   }
 
+  .feedback-two-column-layout {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+
   .feedback-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
@@ -832,6 +894,11 @@ section:hover {
     width: auto;
   }
 
+  .feedback-two-column-layout {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+
   .feedback-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
@@ -851,6 +918,11 @@ section:hover {
 @media (min-width: 1440px) {
   .app {
     padding: 40px;
+  }
+
+  .feedback-two-column-layout {
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
   }
 
   .feedback-grid {
