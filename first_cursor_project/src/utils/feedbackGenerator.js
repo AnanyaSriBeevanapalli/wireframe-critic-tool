@@ -4,6 +4,26 @@
 import { feedbackPhrases } from '../data/feedbackPhrases.js'
 
 /**
+ * Classify phrase style by content so we can restrict by persona (no changes to feedbackPhrases.js).
+ * Stakeholder-style: metrics, conversion, ROI, retention, etc.
+ * Accessibility Expert-style: WCAG SC references, success criteria.
+ * Generic: neither of the above (for End-User and General Designer).
+ */
+function isStakeholderStyle(phrase) {
+  const s = `${phrase.text || ''} ${phrase.suggestion || ''}`.toLowerCase()
+  return /conversion|retention|metrics|roi|funnel|completion rate|abandonment|bounce|drop off|industry avg|viewport benchmarks|exit rate|value props|\d+%\s*(lift|fewer|per)/i.test(s)
+}
+
+function isAccessibilityExpertStyle(phrase) {
+  const s = `${phrase.text || ''} ${phrase.suggestion || ''}`.toLowerCase()
+  return /wcag|sc\s*1\.|sc\s*2\.|sc\s*3\.|4\.5:1|focus order|focus visible|target size|reflow|labels or instructions|use of color|info and relationships/i.test(s)
+}
+
+function isGenericStyle(phrase) {
+  return !isStakeholderStyle(phrase) && !isAccessibilityExpertStyle(phrase)
+}
+
+/**
  * Extract relevant keywords from the wireframe description using regex patterns
  * @param {string} description - The wireframe description text
  * @returns {Array<string>} - Array of detected keywords
@@ -131,59 +151,87 @@ export function filterByPersona(feedbacks, persona) {
 }
 
 /**
- * Select random feedback phrases from relevant categories
- * Ensures variety by selecting different phrases each time
+ * Select random feedback phrases from relevant categories, filtered by persona style.
+ * Stakeholder: only metrics/conversion-style phrases. Accessibility Expert: only WCAG-style.
+ * End-User and General Designer: only generic phrases (no metrics, no WCAG).
  * @param {Array<string>} categories - Categories to select from
  * @param {number} count - Number of feedback items to generate (default: 4-6)
+ * @param {string} persona - Selected persona (determines which phrase styles are allowed)
  * @returns {Array} - Array of feedback objects with unique IDs
  */
-function selectRandomPhrases(categories, count = null) {
+function selectRandomPhrases(categories, count = null, persona = 'General Designer') {
   // Filter phrases by relevant categories
-  const relevantPhrases = feedbackPhrases.filter(phrase => 
+  let relevantPhrases = feedbackPhrases.filter(phrase =>
     categories.includes(phrase.category)
   )
 
-  if (relevantPhrases.length === 0) {
-    // Fallback: use all phrases if no category match
-    return feedbackPhrases.slice(0, Math.min(4, feedbackPhrases.length))
+  // Restrict to persona-appropriate phrase styles (no UI/data changes — selection only)
+  if (persona === 'Stakeholder') {
+    relevantPhrases = relevantPhrases.filter(isStakeholderStyle)
+    if (relevantPhrases.length === 0) {
+      relevantPhrases = feedbackPhrases.filter(p => categories.includes(p.category) && isGenericStyle(p))
+    }
+  } else if (persona === 'Accessibility Expert') {
+    relevantPhrases = relevantPhrases.filter(isAccessibilityExpertStyle)
+    if (relevantPhrases.length === 0) {
+      relevantPhrases = feedbackPhrases.filter(p => categories.includes(p.category) && isGenericStyle(p))
+    }
+  } else {
+    // End-User, General Designer: only generic (no metrics, no WCAG)
+    relevantPhrases = relevantPhrases.filter(isGenericStyle)
+    if (relevantPhrases.length === 0) {
+      relevantPhrases = feedbackPhrases.filter(p => categories.includes(p.category))
+    }
   }
 
-  // Determine how many feedbacks to generate (4-6, or use provided count)
-  const targetCount = count || Math.floor(Math.random() * 3) + 4 // Random between 4-6
-  const selectedCount = Math.min(targetCount, relevantPhrases.length)
+  if (relevantPhrases.length === 0) {
+    return feedbackPhrases.slice(0, Math.min(4, feedbackPhrases.length)).map((p, i) => ({
+      ...p,
+      id: `feedback-${Date.now()}-${i}`
+    }))
+  }
 
-  // Randomly select phrases (with shuffling to ensure variety)
+  const targetCount = count || Math.floor(Math.random() * 3) + 4
+  const selectedCount = Math.min(targetCount, relevantPhrases.length)
   const shuffled = [...relevantPhrases].sort(() => Math.random() - 0.5)
   const selected = shuffled.slice(0, selectedCount)
 
-  // Add unique IDs to each feedback for React keys
   return selected.map((phrase, index) => ({
     ...phrase,
-    id: `feedback-${Date.now()}-${index}` // Unique ID based on timestamp and index
+    id: `feedback-${Date.now()}-${index}`
   }))
 }
 
 /**
  * Generate feedback based on image data (if provided)
- * Adds mobile/responsive feedback if image dimensions indicate mobile concerns
+ * Adds mobile/responsive feedback if image dimensions indicate mobile concerns.
+ * Mobile phrase pool is filtered by persona (WCAG phrases only for Accessibility Expert, etc.).
  * @param {Object|null} imageData - Image metadata (width, height, aspectRatio, etc.)
+ * @param {string} persona - Selected persona (for phrase style filter)
  * @returns {Array} - Array of additional feedback objects related to image/mobile
  */
-function generateImageBasedFeedback(imageData) {
+function generateImageBasedFeedback(imageData, persona = 'General Designer') {
   const additionalFeedbacks = []
 
   if (!imageData) {
     return additionalFeedbacks
   }
 
-  // Check if image suggests mobile-related concerns
   if (imageData.width && imageData.height) {
     const aspectRatio = imageData.width / imageData.height
 
-    // If image is portrait-oriented or small, likely mobile-focused
     if (aspectRatio < 1 || imageData.width < 768) {
-      // Add mobile-specific feedback
-      const mobilePhrases = feedbackPhrases.filter(p => p.category === 'mobile')
+      let mobilePhrases = feedbackPhrases.filter(p => p.category === 'mobile')
+      if (persona === 'Stakeholder') {
+        mobilePhrases = mobilePhrases.filter(isStakeholderStyle)
+        if (mobilePhrases.length === 0) mobilePhrases = feedbackPhrases.filter(p => p.category === 'mobile' && isGenericStyle(p))
+      } else if (persona === 'Accessibility Expert') {
+        mobilePhrases = mobilePhrases.filter(isAccessibilityExpertStyle)
+        if (mobilePhrases.length === 0) mobilePhrases = feedbackPhrases.filter(p => p.category === 'mobile' && isGenericStyle(p))
+      } else {
+        mobilePhrases = mobilePhrases.filter(isGenericStyle)
+        if (mobilePhrases.length === 0) mobilePhrases = feedbackPhrases.filter(p => p.category === 'mobile')
+      }
       if (mobilePhrases.length > 0) {
         const randomMobilePhrase = mobilePhrases[Math.floor(Math.random() * mobilePhrases.length)]
         additionalFeedbacks.push({
@@ -193,7 +241,6 @@ function generateImageBasedFeedback(imageData) {
       }
     }
 
-    // If image is very large, suggest responsiveness concerns
     if (imageData.width > 1920) {
       additionalFeedbacks.push({
         text: "Consider how this large layout adapts to smaller screens and mobile devices.",
@@ -217,19 +264,19 @@ function generateImageBasedFeedback(imageData) {
  * @returns {Array} - Array of feedback objects ready to display
  */
 export function generateFeedback(description = '', imageData = null, persona = 'General Designer') {
-  // Step 1: Extract keywords from description
   const keywords = extractKeywords(description)
+  let categories = selectRelevantCategories(keywords)
 
-  // Step 2: Select relevant categories based on keywords
-  const categories = selectRelevantCategories(keywords)
+  // Accessibility Expert needs accessibility and mobile in the pool so WCAG phrases can be selected
+  if (persona === 'Accessibility Expert') {
+    const extra = ['accessibility', 'mobile'].filter(c => !categories.includes(c))
+    categories = [...categories, ...extra]
+  }
 
-  // Step 3: Select random phrases from relevant categories
-  // Generate 4-6 feedbacks (randomized count for variety)
-  let feedbacks = selectRandomPhrases(categories)
+  let feedbacks = selectRandomPhrases(categories, null, persona)
 
-  // Step 4: Add image-based feedback if image data is provided
   if (imageData) {
-    const imageFeedbacks = generateImageBasedFeedback(imageData)
+    const imageFeedbacks = generateImageBasedFeedback(imageData, persona)
     feedbacks = [...feedbacks, ...imageFeedbacks]
   }
 
@@ -252,12 +299,22 @@ export function generateFeedback(description = '', imageData = null, persona = '
     feedbacks = feedbacks.slice(0, 6)
   }
 
-  // Ensure minimum of 4 feedbacks (if possible)
+  // Ensure minimum of 4 feedbacks (if possible), using persona-appropriate phrases only
   if (feedbacks.length < 4 && feedbackPhrases.length >= 4) {
-    // Fill with random phrases if needed
     const remaining = 4 - feedbacks.length
-    const allCategories = feedbackPhrases.filter(p => !feedbacks.some(f => f.id === p.id))
-    const shuffled = [...allCategories].sort(() => Math.random() - 0.5)
+    const usedTexts = new Set(feedbacks.map(f => (f.text || '').toLowerCase().trim()))
+    let pool = feedbackPhrases.filter(p => !usedTexts.has((p.text || '').toLowerCase().trim()))
+    if (persona === 'Stakeholder') {
+      pool = pool.filter(isStakeholderStyle)
+      if (pool.length === 0) pool = feedbackPhrases.filter(p => !usedTexts.has((p.text || '').toLowerCase().trim()) && isGenericStyle(p))
+    } else if (persona === 'Accessibility Expert') {
+      pool = pool.filter(isAccessibilityExpertStyle)
+      if (pool.length === 0) pool = feedbackPhrases.filter(p => !usedTexts.has((p.text || '').toLowerCase().trim()) && isGenericStyle(p))
+    } else {
+      pool = pool.filter(isGenericStyle)
+      if (pool.length === 0) pool = feedbackPhrases.filter(p => !usedTexts.has((p.text || '').toLowerCase().trim()))
+    }
+    const shuffled = [...pool].sort(() => Math.random() - 0.5)
     const additional = shuffled.slice(0, remaining).map((p, i) => ({
       ...p,
       id: `feedback-fallback-${Date.now()}-${i}`
