@@ -101,26 +101,15 @@ function FeedbackGrid({ feedbacks, selectedPersona, onNoteChange, userNotes = {}
     return entries
   }
 
-  /** Display name for category (e.g. "form" -> "Form") */
-  function getCategoryDisplayName(category) {
-    if (!category) return 'General'
-    return category.charAt(0).toUpperCase() + category.slice(1)
-  }
-
   const groupedIssues = groupByCategory(issues)
   const groupedStrengths = groupByCategory(strengths)
 
-  /** Render one column's content as category groups with optional sub-headers */
+  /** Render one column's content as category groups (grouping kept; no sub-headers) */
   function renderColumnGroups(groups, typeLabel) {
     return (
       <div className="feedback-column-cards" aria-labelledby={typeLabel === 'Issues' ? 'issues-header' : 'strengths-header'}>
         {groups.map(({ category, items }) => (
           <div key={category} className="feedback-category-group">
-            {items.length >= 2 && (
-              <h4 className="category-group-header">
-                {getCategoryDisplayName(category)} {typeLabel}
-              </h4>
-            )}
             {items.map((feedback) => (
               <FeedbackCard
                 key={feedback.id}
