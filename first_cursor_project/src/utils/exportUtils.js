@@ -148,7 +148,7 @@ export async function exportToPDF(description, persona, feedbacks, userNotes = {
     // Create header
     const header = document.createElement('div')
     header.style.marginBottom = '30px'
-    header.style.borderBottom = '3px solid #3498db'
+    header.style.borderBottom = '3px solid #3b82d6'
     header.style.paddingBottom = '15px'
     
     const title = document.createElement('h1')
@@ -216,7 +216,7 @@ export async function exportToPDF(description, persona, feedbacks, userNotes = {
       badge.style.fontSize = '11px'
       badge.style.fontWeight = 'bold'
       badge.style.color = '#ffffff'
-      badge.style.backgroundColor = '#3498db'
+      badge.style.backgroundColor = '#3b82d6'
       badge.style.padding = '4px 10px'
       badge.style.borderRadius = '12px'
       badge.style.display = 'inline-block'
@@ -236,7 +236,7 @@ export async function exportToPDF(description, persona, feedbacks, userNotes = {
         suggestionDiv.style.marginTop = '10px'
         suggestionDiv.style.padding = '10px'
         suggestionDiv.style.backgroundColor = '#ecf0f1'
-        suggestionDiv.style.borderLeft = '3px solid #3498db'
+        suggestionDiv.style.borderLeft = '3px solid #3b82d6'
         suggestionDiv.style.borderRadius = '4px'
         
         const suggestionLabel = document.createElement('strong')
