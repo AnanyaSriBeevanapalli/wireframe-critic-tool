@@ -449,10 +449,12 @@ function App() {
         Skip to main content
       </a>
       
-      {/* Header */}
+      {/* Header: title + subtitle, Clear Session top-right */}
       <header className="app-header">
-        <h1>AI Wireframe Critic</h1>
-        <p className="subtitle">Get nuanced UX feedback on your wireframes</p>
+        <div className="app-header-text">
+          <h1>AI Wireframe Critic</h1>
+          <p className="subtitle">Get nuanced UX feedback on your wireframes</p>
+        </div>
         <button
           className="clear-session-button"
           onClick={handleClearSession}
@@ -465,7 +467,7 @@ function App() {
 
       {/* Main content container */}
       <main id="main-content" className="app-main" role="main" aria-label="Main content">
-        {/* Input Section: Description and Image Upload */}
+        {/* Input Section: description, image upload, persona, then primary CTA */}
         <section className="input-section">
           <InputSection
             description={description}
@@ -473,29 +475,41 @@ function App() {
             onDescriptionChange={handleDescriptionChange}
             onImageChange={handleImageChange}
           />
-        </section>
-
-        {/* Persona Selector */}
-        <section className="persona-section">
           <PersonaSelector
             selectedPersona={selectedPersona}
             onPersonaChange={handlePersonaChange}
           />
+          <div className="generate-section generate-cta-in-input">
+            <div className="generate-buttons-container">
+              <button
+                className="generate-button"
+                onClick={handleGenerateFeedback}
+                disabled={isGenerating || !canGenerate}
+                title={!canGenerate ? 'No changes — feedback is up to date' : 'Generate feedback from description, image, and persona'}
+                aria-label={!canGenerate ? 'No changes — feedback is up to date' : 'Generate feedback'}
+              >
+                {isGenerating ? 'Generating...' : 'Generate Feedback'}
+              </button>
+            </div>
+            {isGenerating && (
+              <div className="loading-indicator">
+                <div className="loading-spinner"></div>
+                <span>Analyzing wireframe and generating feedback...</span>
+              </div>
+            )}
+          </div>
         </section>
 
-        {/* Generate Feedback Button + Export (when feedback exists) */}
-        <section className="generate-section">
-          <div className="generate-buttons-container">
-            <button
-              className="generate-button"
-              onClick={handleGenerateFeedback}
-              disabled={isGenerating || !canGenerate}
-              title={!canGenerate ? 'No changes — feedback is up to date' : 'Generate feedback from description, image, and persona'}
-              aria-label={!canGenerate ? 'No changes — feedback is up to date' : 'Generate feedback'}
-            >
-              {isGenerating ? 'Generating...' : 'Generate Feedback'}
-            </button>
-            {feedbacks.length > 0 && (
+        {/* Output: Feedback cards → Secondary actions (single section) */}
+        <section className="feedback-section" aria-label="Feedback results">
+          <FeedbackGrid 
+            feedbacks={feedbacks}
+            selectedPersona={selectedPersona}
+            onNoteChange={handleNoteChange}
+            userNotes={userNotes}
+          />
+          {feedbacks.length > 0 && (
+            <div className="secondary-actions-section" aria-label="Export feedback">
               <div className="export-buttons">
                 <button
                   className="export-button copy-button"
@@ -522,24 +536,8 @@ function App() {
                   Export PDF
                 </button>
               </div>
-            )}
-          </div>
-          {isGenerating && (
-            <div className="loading-indicator">
-              <div className="loading-spinner"></div>
-              <span>Analyzing wireframe and generating feedback...</span>
             </div>
           )}
-        </section>
-
-        {/* Feedback Cards Area */}
-        <section className="feedback-section">
-          <FeedbackGrid 
-            feedbacks={feedbacks}
-            selectedPersona={selectedPersona}
-            onNoteChange={handleNoteChange}
-            userNotes={userNotes}
-          />
         </section>
       </main>
     </div>

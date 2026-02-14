@@ -18,7 +18,7 @@ body {
   background-color: #f5f5f5;
   color: #1a1a1a; /* Improved contrast: #333 → #1a1a1a (WCAG AA: 12.6:1 on #f5f5f5) */
   line-height: 1.6;
-  font-size: 16px; /* Base font size for better mobile readability */
+  font-size: 15px; /* Compact base for fitting empty state in viewport */
 }
 
 /* App Container - Mobile First */
@@ -28,21 +28,30 @@ body {
   flex-direction: column;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 16px; /* Mobile: smaller padding */
+  padding: 12px; /* Mobile: compact padding */
   width: 100%;
 }
 
 /* Header */
 .app-header {
-  text-align: center;
-  margin-bottom: 30px;
-  padding: 20px 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px 0;
+}
+
+.app-header-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .app-header h1 {
   font-size: 1.75rem; /* Mobile: smaller heading */
   color: #1a1a1a; /* Improved contrast: #2c3e50 → #1a1a1a (WCAG AA: 12.6:1 on white) */
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -50,8 +59,13 @@ body {
 .subtitle {
   color: #4a5568; /* Improved contrast: #7f8c8d → #4a5568 (WCAG AA: 7.1:1 on white) */
   font-size: 1rem; /* Mobile: smaller subtitle */
-  margin-bottom: 12px;
+  margin-bottom: 0;
   line-height: 1.5;
+}
+
+.app-header .clear-session-button {
+  margin-top: 0;
+  flex-shrink: 0;
 }
 
 .clear-session-button {
@@ -89,13 +103,13 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 16px;
 }
 
 /* Section Styling - Enhanced Cards */
 section {
   background: white;
-  padding: 16px; /* Mobile: smaller padding */
+  padding: 14px; /* Mobile: compact padding */
   border-radius: 12px; /* More rounded */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04); /* Subtle shadow */
   transition: box-shadow 0.3s ease, transform 0.2s ease;
@@ -105,17 +119,34 @@ section:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
-/* Input Section */
+/* Input Section (description + image + persona + Generate CTA in one block) */
+.input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Extra spacing around Select Persona section for visual separation within Input block */
+.input-section .persona-selector-container {
+  margin-top: 11px;
+  margin-bottom: 6px;
+}
+
+/* Extra spacing between Persona selector and Generate Feedback button for visual separation */
+.input-section .generate-cta-in-input {
+  margin-top: 12px;
+}
+
 .input-section-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .input-group label {
@@ -127,7 +158,7 @@ section:hover {
 
 .description-textarea {
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   border: 2px solid #ddd;
   border-radius: 8px; /* More rounded */
   font-family: inherit;
@@ -232,7 +263,7 @@ section:hover {
 .persona-fieldset {
   border: 2px solid #e0e0e0;
   border-radius: 6px;
-  padding: 16px;
+  padding: 12px;
   margin: 0;
 }
 
@@ -253,7 +284,7 @@ section:hover {
 .persona-radio-option {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .persona-radio-input {
@@ -335,7 +366,7 @@ section:hover {
   background-color: var(--btn-primary);
   color: white;
   border: none;
-  padding: 14px 32px;
+  padding: 10px 24px;
   font-size: 1rem;
   font-weight: 600;
   border-radius: 8px;
@@ -383,6 +414,15 @@ section:hover {
   flex-direction: column;
   align-items: center;
   gap: 15px;
+}
+
+/* Secondary Output Actions (below feedback section) */
+.secondary-actions-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: 21px;
 }
 
 .generate-buttons-container > .generate-button.regenerate-button {
@@ -490,12 +530,15 @@ section:hover {
 
 /* Feedback Section */
 .feedback-section {
-  min-height: 200px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .feedback-grid-empty {
   text-align: center;
-  padding: 60px 20px;
+  padding: 12px 16px;
   color: #95a5a6;
 }
 
@@ -509,7 +552,7 @@ section:hover {
   font-size: 1rem; /* Mobile: smaller */
   font-weight: 600;
   color: #4a5568; /* Improved contrast */
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   line-height: 1.5;
 }
 
@@ -830,11 +873,11 @@ section:hover {
 /* Tablet: 768px and up */
 @media (min-width: 768px) {
   .app {
-    padding: 24px;
+    padding: 18px;
   }
 
   .app-header h1 {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .subtitle {
@@ -842,12 +885,12 @@ section:hover {
   }
 
   section {
-    padding: 24px; /* Larger padding on tablet */
+    padding: 18px; /* Compact padding on tablet */
   }
 
   .generate-button {
     width: auto; /* Auto width on tablet+ */
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .export-buttons {
@@ -873,7 +916,7 @@ section:hover {
   }
 
   .input-section-container {
-    gap: 24px;
+    gap: 16px;
   }
 }
 
@@ -920,7 +963,7 @@ section:hover {
 
   .input-section-container {
     flex-direction: row;
-    gap: 24px;
+    gap: 18px;
   }
 
   .input-group {
@@ -945,7 +988,7 @@ section:hover {
   }
 
   section {
-    padding: 32px;
+    padding: 24px;
   }
 }
 

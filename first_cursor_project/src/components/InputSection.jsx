@@ -101,7 +101,7 @@ function InputSection({ description, imageFile, onDescriptionChange, onImageChan
           placeholder="Describe your wireframe... (e.g., 'Login page with email field and button')"
           value={description || ''}
           onChange={handleDescriptionChange}
-          rows={4}
+          rows={3}
           aria-label="Wireframe description input"
           aria-describedby="description-help"
         />
