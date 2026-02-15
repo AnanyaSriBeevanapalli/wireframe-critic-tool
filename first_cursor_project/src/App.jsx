@@ -429,7 +429,7 @@ function App() {
     return (
       <div className="app">
         <header className="app-header">
-          <h1>AI Wireframe Critic</h1>
+          <h1>Early Feedback Engine</h1>
           <p className="subtitle">Loading your session...</p>
         </header>
         <main className="app-main">
@@ -452,8 +452,9 @@ function App() {
       {/* Header: title + subtitle, Clear Session top-right */}
       <header className="app-header">
         <div className="app-header-text">
-          <h1>AI Wireframe Critic</h1>
-          <p className="subtitle">Get nuanced UX feedback on your wireframes</p>
+          <h1>Early Feedback Engine</h1>
+          <p className="subtitle">Get fast, persona-based UX feedback on your product idea, prototype, or early MVP even before you have budget or users for real testing.
+            Just describe your concept (text + optional screenshot), choose a persona, and receive prioritized strengths, issues, and next-test guidance to iterate confidently and focus your eventual user research.</p>
         </div>
         <button
           className="clear-session-button"
@@ -514,23 +515,26 @@ function App() {
                 <button
                   className="export-button copy-button"
                   onClick={handleCopyToClipboard}
-                  title="Copy feedback to clipboard"
+                  title="Copy all feedback to clipboard"
+                  aria-label="Copy all feedback to clipboard"
                   disabled={isGenerating}
                 >
-                  Copy
+                  Copy Feedback
                 </button>
                 <button
                   className="export-button download-button"
                   onClick={handleDownloadAsText}
-                  title="Download feedback as text file"
+                  title="Download feedback as TXT file"
+                  aria-label="Download feedback as TXT file"
                   disabled={isGenerating}
                 >
-                  Download Text
+                  Download TXT
                 </button>
                 <button
                   className="export-button pdf-button"
                   onClick={handleExportToPDF}
                   title="Export feedback as PDF"
+                  aria-label="Export feedback as PDF"
                   disabled={isGenerating}
                 >
                   Export PDF

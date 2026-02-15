@@ -60,11 +60,12 @@ body {
   color: #4a5568; /* Improved contrast: #7f8c8d → #4a5568 (WCAG AA: 7.1:1 on white) */
   font-size: 1rem; /* Mobile: smaller subtitle */
   margin-bottom: 0;
+  padding-top: 17px;
   line-height: 1.5;
 }
 
 .app-header .clear-session-button {
-  margin-top: 0;
+  margin-top: 17px;
   flex-shrink: 0;
 }
 
@@ -443,7 +444,7 @@ section:hover {
 .export-buttons {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 15px;
   width: 100%;
   align-items: center;
 }

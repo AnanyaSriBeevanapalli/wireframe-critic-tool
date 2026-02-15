@@ -10,7 +10,7 @@
  * @returns {string} - Formatted text string
  */
 export function formatFeedbackAsText(feedbacks, description, persona, userNotes = {}) {
-  let text = 'AI Wireframe Critic - Feedback Report\n'
+  let text = 'Early Feedback Engine - Feedback Report\n'
   text += '='.repeat(60) + '\n\n'
   
   if (description) {
@@ -152,7 +152,7 @@ export async function exportToPDF(description, persona, feedbacks, userNotes = {
     header.style.paddingBottom = '15px'
     
     const title = document.createElement('h1')
-    title.textContent = 'AI Wireframe Critic - Feedback Report'
+    title.textContent = 'Early Feedback Engine - Feedback Report'
     title.style.margin = '0 0 10px 0'
     title.style.fontSize = '24px'
     title.style.color = '#2c3e50'
