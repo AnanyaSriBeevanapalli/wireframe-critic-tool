@@ -2,14 +2,15 @@
 
 /**
  * Format feedbacks as plain text for export
- * Includes user notes if provided
+ * Includes user notes if provided; optionally appends Next Steps for Real User Testing.
  * @param {Array} feedbacks - Array of feedback objects
  * @param {string} description - Wireframe description
  * @param {string} persona - Selected persona
  * @param {Object} userNotes - Optional user notes object mapping feedback IDs to notes
+ * @param {string[]} nextSteps - Optional array of "Next Steps for Real User Testing" suggestions (appended at end)
  * @returns {string} - Formatted text string
  */
-export function formatFeedbackAsText(feedbacks, description, persona, userNotes = {}) {
+export function formatFeedbackAsText(feedbacks, description, persona, userNotes = {}, nextSteps = []) {
   let text = 'Early Feedback Engine - Feedback Report\n'
   text += '='.repeat(60) + '\n\n'
   
@@ -39,7 +40,17 @@ export function formatFeedbackAsText(feedbacks, description, persona, userNotes 
     text += '-'.repeat(60) + '\n'
   })
   
-  text += '\n' + '='.repeat(60) + '\n'
+  if (Array.isArray(nextSteps) && nextSteps.length > 0) {
+    text += '\n' + '='.repeat(60) + '\n'
+    text += 'Next Steps for Real User Testing\n'
+    text += '-'.repeat(60) + '\n'
+    nextSteps.forEach((step, i) => {
+      text += `• ${step}\n`
+    })
+    text += '-'.repeat(60) + '\n\n'
+  }
+  
+  text += '='.repeat(60) + '\n'
   text += 'End of Report\n'
   
   return text
@@ -101,14 +112,15 @@ export function downloadAsText(text, filename = 'wireframe-feedback') {
 
 /**
  * Export feedback section to PDF using html2pdf.js
- * Creates a formatted PDF with header, description, persona, and all feedback cards
+ * Creates a formatted PDF with header, description, persona, all feedback cards, and optional Next Steps block.
  * @param {string} description - Wireframe description
  * @param {string} persona - Selected persona
  * @param {Array} feedbacks - Array of feedback objects
  * @param {Object} userNotes - Optional user notes object
+ * @param {string[]} nextSteps - Optional "Next Steps for Real User Testing" suggestions (footer block)
  * @returns {Promise<boolean>} - True if successful, false otherwise
  */
-export async function exportToPDF(description, persona, feedbacks, userNotes = {}) {
+export async function exportToPDF(description, persona, feedbacks, userNotes = {}, nextSteps = []) {
   // Check if html2pdf is available
   if (typeof window.html2pdf === 'undefined') {
     console.error('html2pdf.js is not loaded. Please check the CDN script.')
@@ -277,6 +289,40 @@ export async function exportToPDF(description, persona, feedbacks, userNotes = {
 
       pdfContainer.appendChild(card)
     })
+
+    // Next Steps for Real User Testing (footer block)
+    if (Array.isArray(nextSteps) && nextSteps.length > 0) {
+      const nextStepsSection = document.createElement('div')
+      nextStepsSection.style.marginTop = '25px'
+      nextStepsSection.style.padding = '15px'
+      nextStepsSection.style.backgroundColor = '#f8f9fa'
+      nextStepsSection.style.border = '1px solid #e0e0e0'
+      nextStepsSection.style.borderRadius = '4px'
+      nextStepsSection.style.borderLeft = '4px solid #3b82d6'
+
+      const nextStepsTitle = document.createElement('h3')
+      nextStepsTitle.textContent = 'Next Steps for Real User Testing'
+      nextStepsTitle.style.margin = '0 0 12px 0'
+      nextStepsTitle.style.fontSize = '14px'
+      nextStepsTitle.style.color = '#2c3e50'
+      nextStepsTitle.style.fontWeight = 'bold'
+      nextStepsSection.appendChild(nextStepsTitle)
+
+      const list = document.createElement('ul')
+      list.style.margin = '0'
+      list.style.paddingLeft = '20px'
+      list.style.fontSize = '11px'
+      list.style.lineHeight = '1.5'
+      list.style.color = '#34495e'
+      nextSteps.forEach((step) => {
+        const li = document.createElement('li')
+        li.textContent = step
+        li.style.marginBottom = '6px'
+        list.appendChild(li)
+      })
+      nextStepsSection.appendChild(list)
+      pdfContainer.appendChild(nextStepsSection)
+    }
 
     // Append to body temporarily
     document.body.appendChild(pdfContainer)

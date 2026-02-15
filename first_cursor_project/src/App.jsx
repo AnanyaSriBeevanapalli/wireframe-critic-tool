@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import InputSection from './components/InputSection'
 import PersonaSelector from './components/PersonaSelector'
 import FeedbackGrid from './components/FeedbackGrid'
+import NextTestSteps from './components/NextTestSteps'
 import { generateFeedback } from './utils/feedbackGenerator'
+import { generateNextTestSteps } from './utils/nextTestStepsGenerator'
 import { analyzeImage } from './utils/imageAnalyzer'
 import { formatFeedbackAsText, copyToClipboard, downloadAsText, exportToPDF } from './utils/exportUtils'
 import { saveSession, loadSession, clearSession } from './utils/localStorage'
@@ -118,6 +120,15 @@ function App() {
   /** True when Generate button should be enabled (first time or inputs changed). */
   const canGenerate = feedbacks.length === 0 || hasInputsChanged()
 
+  /** Next Steps for Real User Testing: derived from feedbacks + persona (3–5 bullets). */
+  const nextStepsSuggestions = useMemo(
+    () => generateNextTestSteps(feedbacks, selectedPersona),
+    [feedbacks, selectedPersona]
+  )
+
+  /** Collapse Next Steps by default when there are many feedback cards. */
+  const nextStepsDefaultExpanded = feedbacks.length <= 4
+
   // ====================================
   // MAIN FEEDBACK GENERATION HANDLER
   // ====================================
@@ -176,7 +187,7 @@ function App() {
     }
 
     try {
-      const text = formatFeedbackAsText(feedbacks, description, selectedPersona, userNotes)
+      const text = formatFeedbackAsText(feedbacks, description, selectedPersona, userNotes, nextStepsSuggestions)
       const success = await copyToClipboard(text)
       
       if (success) {
@@ -201,7 +212,7 @@ function App() {
     }
 
     try {
-      const text = formatFeedbackAsText(feedbacks, description, selectedPersona, userNotes)
+      const text = formatFeedbackAsText(feedbacks, description, selectedPersona, userNotes, nextStepsSuggestions)
       downloadAsText(text, 'wireframe-feedback')
     } catch (error) {
       console.error('Error downloading feedback:', error)
@@ -226,7 +237,7 @@ function App() {
       // Add a small delay to ensure any loading states are cleared
       await new Promise(resolve => setTimeout(resolve, 200))
       
-      const success = await exportToPDF(description, selectedPersona, feedbacks, userNotes)
+      const success = await exportToPDF(description, selectedPersona, feedbacks, userNotes, nextStepsSuggestions)
       
       if (success) {
         // PDF download started successfully
@@ -509,6 +520,12 @@ function App() {
             onNoteChange={handleNoteChange}
             userNotes={userNotes}
           />
+          {feedbacks.length > 0 && nextStepsSuggestions.length > 0 && (
+            <NextTestSteps
+              suggestions={nextStepsSuggestions}
+              defaultExpanded={nextStepsDefaultExpanded}
+            />
+          )}
           {feedbacks.length > 0 && (
             <div className="secondary-actions-section" aria-label="Export feedback">
               <div className="export-buttons">
