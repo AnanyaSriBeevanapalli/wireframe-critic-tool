@@ -30,6 +30,7 @@ function App() {
   // UI State
   const [isGenerating, setIsGenerating] = useState(false) // Loading state for feedback generation
   const [isLoadingSession, setIsLoadingSession] = useState(true) // Loading state for session restore
+  const [showClearConfirm, setShowClearConfirm] = useState(false) // Clear session confirmation dialog
   
   // Button Logic State (tracks last generation inputs so button is enabled only when something changed)
   const [lastGeneratedDescription, setLastGeneratedDescription] = useState('')
@@ -297,32 +298,42 @@ function App() {
     })
   }
 
-  /**
-   * Clear all session data and reset app state
-   */
+  /** Open the clear-session confirmation dialog */
   const handleClearSession = () => {
-    if (window.confirm('Are you sure you want to clear all data? This will reset your description, feedback, and notes.')) {
-      // Clear localStorage
-      clearSession()
-      
-      // Reset all state
-      setDescription('')
-      setImageFile(null)
-      setImageData(null)
-      setSelectedPersona('General Designer')
-      setFeedbacks([])
-      setUserNotes({})
-      setLastGeneratedDescription('')
-      setLastGeneratedImageIdentifier(null)
-      setLastGeneratedPersona(null)
-      
-      // Clear file input if it exists
-      const fileInput = document.getElementById('image-upload')
-      if (fileInput) {
-        fileInput.value = ''
-      }
-    }
+    setShowClearConfirm(true)
   }
+
+  /** Confirm and perform clear: reset session and close dialog */
+  const handleConfirmClearSession = () => {
+    clearSession()
+    setDescription('')
+    setImageFile(null)
+    setImageData(null)
+    setSelectedPersona('General Designer')
+    setFeedbacks([])
+    setUserNotes({})
+    setLastGeneratedDescription('')
+    setLastGeneratedImageIdentifier(null)
+    setLastGeneratedPersona(null)
+    const fileInput = document.getElementById('image-upload')
+    if (fileInput) fileInput.value = ''
+    setShowClearConfirm(false)
+  }
+
+  /** Cancel clear and close dialog */
+  const handleCancelClearSession = () => {
+    setShowClearConfirm(false)
+  }
+
+  /** Close clear-session dialog on Escape */
+  useEffect(() => {
+    if (!showClearConfirm) return
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') handleCancelClearSession()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [showClearConfirm])
 
   // ====================================
   // SESSION MANAGEMENT (localStorage)
@@ -460,22 +471,66 @@ function App() {
         Skip to main content
       </a>
       
-      {/* Header: title + subtitle, Clear Session top-right */}
+      {/* Header: title + subtitle, Clear Session top-right (icon on mobile, text on desktop) */}
       <header className="app-header">
         <div className="app-header-text">
-          <h1>Early Feedback Engine</h1>
-          <p className="subtitle">Get fast, persona-based UX feedback on your product idea, prototype, or early MVP even before you have budget or users for real testing.
-            Just describe your concept (text + optional screenshot), choose a persona, and receive prioritized strengths, issues, and next-test guidance to iterate confidently and focus your eventual user research.</p>
+          <div className="app-header-title-row">
+            <h1>Early Feedback Engine</h1>
+            <button
+              type="button"
+              className="clear-session-button clear-session-button-mobile"
+              onClick={handleClearSession}
+              title="Clear session"
+              aria-label="Clear session"
+            >
+              <span className="clear-session-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+                  <path d="M23 4v6h-6" />
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                </svg>
+              </span>
+            </button>
+          </div>
+          <p className="subtitle">Get fast, persona-based UX feedback on your product idea, prototype, or early MVP even before you have budget or users for real testing.</p>
+          <p className="subtitle subtitle-second">Just describe your concept (text + optional screenshot), choose a persona, and receive prioritized strengths, issues, and next-test guidance to iterate confidently and focus your eventual user research.</p>
         </div>
         <button
-          className="clear-session-button"
+          type="button"
+          className="clear-session-button clear-session-button-desktop"
           onClick={handleClearSession}
-          title="Clear all data and start fresh"
-          aria-label="Clear session and reset all data"
+          title="Clear session"
+          aria-label="Clear session"
         >
           Clear Session
         </button>
       </header>
+
+      {/* Clear session confirmation dialog */}
+      {showClearConfirm && (
+        <div className="clear-session-dialog-backdrop" role="presentation" onClick={handleCancelClearSession}>
+          <div
+            className="clear-session-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="clear-session-dialog-title"
+            aria-describedby="clear-session-dialog-desc"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="clear-session-dialog-title" className="clear-session-dialog-title">Clear session?</h2>
+            <p id="clear-session-dialog-desc" className="clear-session-dialog-desc">
+              This will clear your inputs and generated feedback. You can&apos;t undo this.
+            </p>
+            <div className="clear-session-dialog-actions">
+              <button type="button" className="clear-session-dialog-cancel" onClick={handleCancelClearSession}>
+                Cancel
+              </button>
+              <button type="button" className="clear-session-dialog-confirm" onClick={handleConfirmClearSession}>
+                Clear session
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main content container */}
       <main id="main-content" className="app-main" role="main" aria-label="Main content">
@@ -532,29 +587,54 @@ function App() {
                 <button
                   className="export-button copy-button"
                   onClick={handleCopyToClipboard}
-                  title="Copy all feedback to clipboard"
-                  aria-label="Copy all feedback to clipboard"
+                  title="Copy Feedback"
+                  aria-label="Copy Feedback"
                   disabled={isGenerating}
                 >
-                  Copy Feedback
+                  <span className="export-button-icon" aria-hidden="true">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                  </span>
+                  <span className="export-button-label">Copy</span>
+                  <span className="export-button-text">Copy Feedback</span>
                 </button>
                 <button
                   className="export-button download-button"
                   onClick={handleDownloadAsText}
-                  title="Download feedback as TXT file"
-                  aria-label="Download feedback as TXT file"
+                  title="Download TXT"
+                  aria-label="Download TXT"
                   disabled={isGenerating}
                 >
-                  Download TXT
+                  <span className="export-button-icon" aria-hidden="true">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                  </span>
+                  <span className="export-button-label">TXT</span>
+                  <span className="export-button-text">Download TXT</span>
                 </button>
                 <button
                   className="export-button pdf-button"
                   onClick={handleExportToPDF}
-                  title="Export feedback as PDF"
-                  aria-label="Export feedback as PDF"
+                  title="Export PDF"
+                  aria-label="Export PDF"
                   disabled={isGenerating}
                 >
-                  Export PDF
+                  <span className="export-button-icon" aria-hidden="true">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                      <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                  </span>
+                  <span className="export-button-label">PDF</span>
+                  <span className="export-button-text">Export PDF</span>
                 </button>
               </div>
             </div>

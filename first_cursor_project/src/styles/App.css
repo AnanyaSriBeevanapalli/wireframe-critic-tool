@@ -32,12 +32,13 @@ body {
   width: 100%;
 }
 
-/* Header */
+/* Header - stack on mobile so description uses full width; row on larger screens */
 .app-header {
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 16px;
   margin-bottom: 16px;
   padding: 12px 0;
@@ -46,6 +47,21 @@ body {
 .app-header-text {
   flex: 1;
   min-width: 0;
+  width: 100%;
+}
+
+/* Mobile: title and Clear Session icon on one row, center-aligned */
+.app-header-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px; /* gap to subtitles; keeps flex alignment based on title line only */
+}
+
+.app-header-title-row h1 {
+  margin-bottom: 0; /* margin lives on .app-header-title-row so button aligns with title */
 }
 
 .app-header h1 {
@@ -62,11 +78,45 @@ body {
   margin-bottom: 0;
   padding-top: 17px;
   line-height: 1.5;
+  max-width: 100%;
 }
 
+/* Second sentence as its own paragraph on mobile for readability; tighter on desktop */
+.subtitle-second {
+  padding-top: 10px;
+  margin-top: 6px;
+}
+
+/* Clear Session: right-align when stacked (mobile), row layout restores at 768px */
 .app-header .clear-session-button {
   margin-top: 17px;
   flex-shrink: 0;
+  align-self: flex-end;
+}
+
+/* Mobile: icon-only button in title row; override header margin and align with title */
+.app-header-title-row .clear-session-button-mobile {
+  margin-top: 0;
+}
+
+.clear-session-button-mobile {
+  margin-top: 0;
+  padding: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-0.35em); /* align with title cap height (1.75rem title) */
+}
+
+.clear-session-button-mobile .clear-session-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Desktop: hide icon button, show text button */
+.clear-session-button-desktop {
+  display: none;
 }
 
 .clear-session-button {
@@ -97,6 +147,83 @@ body {
 .clear-session-button:focus-visible {
   outline: 3px solid #e74c3c;
   outline-offset: 2px;
+}
+
+/* Clear session confirmation dialog */
+.clear-session-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.clear-session-dialog {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.clear-session-dialog-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 12px 0;
+}
+
+.clear-session-dialog-desc {
+  font-size: 1rem;
+  color: #4a5568;
+  line-height: 1.5;
+  margin: 0 0 20px 0;
+}
+
+.clear-session-dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.clear-session-dialog-cancel {
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 2px solid #ddd;
+  background: white;
+  color: #1a1a1a;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-session-dialog-cancel:hover {
+  border-color: #999;
+  background: #f5f5f5;
+}
+
+.clear-session-dialog-confirm {
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  background-color: #e74c3c;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.2);
+  transition: all 0.2s ease;
+}
+
+.clear-session-dialog-confirm:hover {
+  background-color: #c0392b;
+  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
 }
 
 /* Main Content */
@@ -443,22 +570,55 @@ section:hover {
 /* Export Buttons */
 .export-buttons {
   display: flex;
-  flex-direction: column;
-  gap: 15px;
+  flex-direction: row; /* Mobile: horizontal row of icon buttons */
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px; /* Slightly increased spacing between buttons */
   width: 100%;
   align-items: center;
 }
 
 .export-button {
+  display: inline-flex;
   background-color: transparent;
   border: 2px solid;
-  padding: 10px 20px;
+  padding: 10px 12px;
   font-size: 0.9rem;
   font-weight: 600;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 100px;
+  min-width: 0;
+  flex: 1 1 0; /* Mobile: equal width for all three buttons */
+  max-width: 120px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile: icon + small label; hide full text */
+.export-button-text {
+  display: none;
+}
+
+.export-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile: slightly larger icons for clarity and accessibility */
+.export-button-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.export-button-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  margin-top: 4px;
+  line-height: 1.2;
 }
 
 .export-button:hover {
@@ -951,12 +1111,45 @@ section:hover {
     padding: 18px;
   }
 
+  .app-header {
+    position: relative;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-header-text {
+    width: 100%;
+  }
+
+  .app-header .clear-session-button-desktop {
+    position: absolute;
+    top: 12px;
+    right: 0;
+  }
+
+  .app-header-title-row {
+    padding-right: 160px; /* room for absolutely positioned button */
+  }
+
+  .clear-session-button-mobile {
+    display: none;
+  }
+
+  .clear-session-button-desktop {
+    display: inline-flex;
+  }
+
   .app-header h1 {
     font-size: 2rem;
   }
 
   .subtitle {
     font-size: 1.1rem;
+  }
+
+  .subtitle-second {
+    padding-top: 0;
+    margin-top: 0;
   }
 
   section {
@@ -976,8 +1169,21 @@ section:hover {
   }
 
   .export-button {
+    flex: none;
+    max-width: none;
+    flex-direction: row;
+    padding: 10px 20px;
     font-size: 0.95rem;
     min-width: 120px;
+  }
+
+  .export-button-text {
+    display: inline;
+  }
+
+  .export-button-icon,
+  .export-button-label {
+    display: none;
   }
 
   .feedback-two-column-layout {
@@ -1041,7 +1247,13 @@ section:hover {
     gap: 18px;
   }
 
-  .input-group {
+  /* Wireframe Description gets more width so text flows further right; image upload narrower */
+  .input-section-container .input-group:first-child {
+    flex: 1.5;
+    min-width: 0;
+  }
+
+  .input-section-container .input-group:last-child {
     flex: 1;
   }
 }
